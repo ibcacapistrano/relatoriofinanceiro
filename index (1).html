@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Relatório Financeiro - IBCA</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#0b2545;
+    --blue:#1d4ed8;
+    --blue-light:#3b82f6;
+    --blue-pale:#eff6ff;
+    --card:#ffffff;
+    --ink:#0f172a;
+    --muted:#64748b;
+    --green:#16a34a;
+    --red:#dc2626;
+    --gold:#ca8a04;
+    --line:#e2e8f0;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{width:100%; overflow-x:hidden;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:#f1f5f9;
+    color:var(--ink);
+    padding-bottom:40px;
+  }
+
+  .top-banner{
+    background:linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+    padding-bottom:16px;
+    border-radius:0 0 22px 22px;
+  }
+  header{
+    padding:24px 16px 14px;
+    color:white;
+    text-align:center;
+  }
+  header .icon{font-size:26px;}
+  header h1{
+    margin:6px 0 2px;
+    font-size:19px;
+    font-weight:800;
+    line-height:1.25;
+  }
+  header p{
+    margin:0;
+    opacity:.8;
+    font-size:12px;
+  }
+  .tabs{
+    display:flex;
+    max-width:720px;
+    margin:0 auto;
+    padding:0 16px;
+    gap:8px;
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:12px 8px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:700;
+    color:rgba(255,255,255,.85);
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.18);
+    cursor:pointer;
+    user-select:none;
+    transition:.15s;
+  }
+  .tab.active{
+    background:#ffffff;
+    color:var(--blue);
+    border-color:#ffffff;
+  }
+
+  .selector-wrap{
+    max-width:720px;
+    margin:0 auto;
+    padding:14px 16px 0;
+  }
+  .select-inner{
+    position:relative;
+  }
+  .select-inner::after{
+    content:'▾';
+    position:absolute;
+    right:16px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--blue);
+    font-size:15px;
+    font-weight:700;
+    pointer-events:none;
+  }
+  select{
+    width:100%;
+    padding:14px 44px 14px 16px;
+    border-radius:14px;
+    border:1px solid var(--line);
+    font-size:16px;
+    font-weight:600;
+    background:white;
+    box-shadow:0 4px 14px rgba(11,37,69,.08);
+    color:var(--ink);
+    appearance:none;
+    -webkit-appearance:none;
+  }
+  .container{
+    max-width:720px;
+    margin:0 auto;
+    padding:16px 16px 0;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:20px;
+  }
+  @media (max-width:340px){
+    .grid{grid-template-columns:1fr;}
+  }
+  .card{
+    background:var(--card);
+    border-radius:16px;
+    padding:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+    border:1px solid var(--line);
+    min-width:0;
+  }
+  .card.wide{grid-column:1 / -1;}
+  .card .label{
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:6px;
+    font-weight:700;
+  }
+  .card .value{
+    font-size:clamp(18px, 5.5vw, 24px);
+    font-weight:800;
+    letter-spacing:-.02em;
+    word-break:break-word;
+  }
+  .card.entradas{border-top:3px solid var(--green);}
+  .card.entradas .value{color:var(--green);}
+  .card.despesas{border-top:3px solid var(--red);}
+  .card.despesas .value{color:var(--red);}
+  .card.dizimos{border-top:3px solid var(--blue);}
+  .card.dizimos .value{color:var(--blue);}
+  .card.ofertas{border-top:3px solid var(--gold);}
+  .card.ofertas .value{color:var(--gold);}
+  .card.saldo{border-top:3px solid var(--navy);}
+  .card.saldo .value{font-size:clamp(22px, 7vw, 30px);}
+  .card.saldo.positivo .value{color:var(--green);}
+  .card.saldo.negativo .value{color:var(--red);}
+  .card.dizimistas-card{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--blue-pale);
+    border:1px solid #bfdbfe;
+  }
+  .card.dizimistas-card .label{margin-bottom:0;}
+  .card.dizimistas-card .value{color:var(--blue); font-size:22px;}
+  .card .sub{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+  h2.section{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--muted);
+    margin:26px 0 10px;
+    font-weight:800;
+  }
+  .chart-card{
+    background:var(--card);
+    border-radius:16px;
+    padding:14px;
+    border:1px solid var(--line);
+    margin-bottom:20px;
+    max-width:100%;
+    overflow:hidden;
+  }
+  .chart-card canvas{max-width:100% !important;}
+  #despesasLegenda ul{
+    list-style:none;
+    margin:0;
+    padding:12px 0 0;
+    border-top:1px solid var(--line);
+  }
+  #despesasLegenda li{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.6;
+  }
+  #despesasLegenda li strong{color:var(--ink);}
+  .detalhe-list{
+    background:var(--card);
+    border-radius:16px;
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .detalhe-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:11px 16px;
+    font-size:13px;
+    border-bottom:1px solid var(--line);
+  }
+  .detalhe-item:last-child{border-bottom:none;}
+  .detalhe-item:nth-child(even){background:#f8fafc;}
+  .detalhe-item .desc{color:var(--ink); font-weight:500;}
+  .detalhe-item .valor{
+    font-weight:700;
+    color:var(--ink);
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .detalhe-total{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:13px 16px;
+    background:var(--blue-pale);
+    font-weight:800;
+    font-size:14px;
+    color:var(--blue);
+    border-top:2px solid #bfdbfe;
+  }
+  .loading{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--muted);
+  }
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:11px;
+    margin-top:24px;
+    padding:0 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-banner">
+  <header>
+    <div class="icon">⛪</div>
+    <h1>Igreja Batista em<br>Carqueja dos Alves</h1>
+    <p id="lastUpdate">Carregando...</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" id="tabMensal">Mês a mês</div>
+    <div class="tab" id="tabAnual">Ano completo</div>
+  </div>
+</div>
+
+<div class="selector-wrap" id="selectorWrap">
+  <div class="select-inner">
+    <select id="mesSelect"></select>
+  </div>
+</div>
+
+<div class="container" id="content">
+  <div class="loading">Carregando dados da planilha...</div>
+</div>
+
+<footer>Dados sincronizados automaticamente com o Google Sheets</footer>
+
+<script>
+// ATENCAO: cole aqui a URL do seu Apps Script (termina em /exec)
+const API_URL = 'COLE_AQUI_A_URL_DO_APPS_SCRIPT';
+
+let allData = [];
+let mode = 'mensal'; // 'mensal' | 'anual'
+let despesasChart, trendChart, dizimistasChart;
+
+function brl(n){
+  return 'R$ ' + n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+// Categorias agrupadas de despesa: label completo + campos somados
+const DESPESA_CATEGORIAS = [
+  ['Spim (parcela + manutenção + combustível)', ['parcelaSpim', 'concertosSpim', 'combustivelSpim']],
+  ['Combustível viagens missionárias (Ir. Marcos + Pr. Pedro)', ['combustivelPastor', 'combustivelIrMarcos']],
+  ['Cafés (leite + padaria)', ['leite', 'padaria']],
+  ['Templo (limpeza + água + internet + luz)', ['limpeza', 'agua', 'internet', 'luz']],
+  ['IPVA', ['ipva']],
+  ['Abasce', ['abasce']],
+  ['Plano cooperativo', ['planoCooperativo']]
+];
+
+// Quebra um texto em várias linhas curtas para não estourar a largura do gráfico no mobile
+function wrapLabel(text, maxChars){
+  const words = text.split(' ');
+  const lines = [];
+  let current = '';
+  words.forEach(w => {
+    const test = (current + ' ' + w).trim();
+    if(test.length > maxChars && current){
+      lines.push(current.trim());
+      current = w;
+    } else {
+      current = test;
+    }
+  });
+  if(current) lines.push(current.trim());
+  return lines;
+}
+
+const TODOS_CAMPOS_DESPESA = DESPESA_CATEGORIAS.flatMap(([, keys]) => keys);
+
+// Nome de exibição de cada item individual, na mesma ordem das colunas da planilha
+const ITEM_LABELS = [
+  ['parcelaSpim', 'Parcela Spim'],
+  ['combustivelSpim', 'Combustível Spim'],
+  ['concertosSpim', 'Concertos/Manutenção Spim'],
+  ['ipva', 'IPVA'],
+  ['internet', 'Internet'],
+  ['luz', 'Luz'],
+  ['agua', 'Água'],
+  ['padaria', 'Padaria'],
+  ['leite', 'Leite'],
+  ['abasce', 'Abasce'],
+  ['limpeza', 'Limpeza do templo'],
+  ['planoCooperativo', 'Plano cooperativo'],
+  ['combustivelPastor', 'Combustível Pr. Pedro'],
+  ['combustivelIrMarcos', 'Combustível Ir. Marcos']
+];
+
+function renderDetalhamento(d){
+  const itens = ITEM_LABELS
+    .map(([key, label]) => [label, d[key]])
+    .filter(x => x[1] > 0);
+
+  const linhas = itens.map(([label, valor]) => `
+    <div class="detalhe-item">
+      <span class="desc">${label}</span>
+      <span class="valor">${brl(valor)}</span>
+    </div>
+  `).join('');
+
+  return `
+    <h2 class="section">Detalhamento das despesas</h2>
+    <div class="detalhe-list">
+      ${linhas}
+      <div class="detalhe-total">
+        <span>Total de despesas</span>
+        <span>${brl(d.totalDespesas)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function somaAnual(){
+  const acc = { mes: 'Ano completo', dizimistas: 0 };
+  TODOS_CAMPOS_DESPESA.forEach(key => acc[key] = 0);
+  ['totalDizimos','totalOfertas','totalDespesas','totalEntradas','saldo'].forEach(k => acc[k] = 0);
+
+  allData.forEach(d => {
+    TODOS_CAMPOS_DESPESA.forEach(key => acc[key] += d[key]);
+    acc.totalDizimos += d.totalDizimos;
+    acc.totalOfertas += d.totalOfertas;
+    acc.totalDespesas += d.totalDespesas;
+    acc.totalEntradas += d.totalEntradas;
+    acc.saldo += d.saldo;
+    acc.dizimistas = Math.max(acc.dizimistas, d.dizimistas);
+  });
+  return acc;
+}
+
+function renderCards(d, dizimistasLabel){
+  const saldoClass = d.saldo >= 0 ? 'positivo' : 'negativo';
+  return `
+    <div class="grid">
+      <div class="card entradas">
+        <div class="label">Total Entradas</div>
+        <div class="value">${brl(d.totalEntradas)}</div>
+      </div>
+      <div class="card despesas">
+        <div class="label">Total Despesas</div>
+        <div class="value">${brl(d.totalDespesas)}</div>
+      </div>
+
+      <div class="card saldo ${saldoClass} wide">
+        <div class="label">Saldo</div>
+        <div class="value">${brl(d.saldo)}</div>
+      </div>
+
+      <div class="card dizimos">
+        <div class="label">Dízimos</div>
+        <div class="value">${brl(d.totalDizimos)}</div>
+      </div>
+      <div class="card ofertas">
+        <div class="label">Ofertas</div>
+        <div class="value">${brl(d.totalOfertas)}</div>
+      </div>
+
+      <div class="card dizimistas-card wide">
+        <div class="label">Dizimistas</div>
+        <div class="value">${d.dizimistas} ${dizimistasLabel}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderCharts(d, trendLabels, trendEntradas, trendDespesas, trendTitulo, trendDizimistas){
+  const despesasDetalhe = DESPESA_CATEGORIAS
+    .map(([label, keys]) => [label, keys.reduce((s, k) => s + d[k], 0)])
+    .filter(x => x[1] > 0)
+    .sort((a,b) => b[1]-a[1]);
+
+  if(despesasChart) despesasChart.destroy();
+  if(trendChart) trendChart.destroy();
+  if(dizimistasChart) dizimistasChart.destroy();
+
+  const MAX_CHARS_POR_LINHA = 17;
+  const labelsQuebrados = despesasDetalhe.map(x => wrapLabel(x[0], MAX_CHARS_POR_LINHA));
+  const maxLinhas = Math.max(...labelsQuebrados.map(l => l.length));
+
+  // altura dinâmica: mais espaço quando os rótulos precisam de mais linhas
+  document.getElementById('despesasChart').parentElement.style.height =
+    (despesasDetalhe.length * (22 + maxLinhas * 13) + 20) + 'px';
+
+  despesasChart = new Chart(document.getElementById('despesasChart'), {
+    type: 'bar',
+    data: {
+      labels: labelsQuebrados,
+      datasets: [{
+        data: despesasDetalhe.map(x => x[1]),
+        backgroundColor: '#1d4ed8',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      maintainAspectRatio: false,
+      layout: { padding: { right: 8 } },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { callback: v => 'R$ ' + v } },
+        y: { ticks: { font: { size: 11 }, autoSkip: false } }
+      }
+    }
+  });
+
+  document.getElementById('trendTitle').textContent = trendTitulo;
+  trendChart = new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: trendLabels,
+      datasets: [
+        {
+          label: 'Entradas',
+          data: trendEntradas,
+          borderColor: '#16a34a',
+          backgroundColor: '#16a34a22',
+          tension: .3,
+          fill: true
+        },
+        {
+          label: 'Despesas',
+          data: trendDespesas,
+          borderColor: '#dc2626',
+          backgroundColor: '#dc262622',
+          tension: .3,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  dizimistasChart = new Chart(document.getElementById('dizimistasChart'), {
+    type: 'line',
+    data: {
+      labels: trendLabels,
+      datasets: [{
+        label: 'Dizimistas',
+        data: trendDizimistas,
+        borderColor: '#1d4ed8',
+        backgroundColor: '#1d4ed822',
+        tension: .3,
+        fill: true,
+        pointRadius: 4,
+        pointBackgroundColor: '#1d4ed8'
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+}
+
+function renderMensal(mes){
+  const d = allData.find(x => x.mes === mes);
+  if(!d) return;
+  document.getElementById('content').innerHTML = renderCards(d, 'dizimistas no mês') + `
+    <h2 class="section">Despesas por categoria — ${d.mes}</h2>
+    <div class="chart-card"><canvas id="despesasChart"></canvas></div>
+    <h2 class="section" id="trendTitle">Entradas vs Despesas (mês a mês)</h2>
+    <div class="chart-card"><canvas id="trendChart"></canvas></div>
+    <h2 class="section">Evolução do número de dizimistas</h2>
+    <div class="chart-card"><canvas id="dizimistasChart"></canvas></div>
+    ${renderDetalhamento(d)}
+  `;
+  document.getElementById('despesasChart').parentElement.style.height = '340px';
+  document.getElementById('trendChart').parentElement.style.height = '280px';
+  document.getElementById('dizimistasChart').parentElement.style.height = '240px';
+
+  const trendData = [...allData].reverse();
+  renderCharts(d, trendData.map(x => x.mes), trendData.map(x => x.totalEntradas), trendData.map(x => x.totalDespesas), 'Entradas vs Despesas (mês a mês)', trendData.map(x => x.dizimistas));
+}
+
+function renderAnual(){
+  const d = somaAnual();
+  document.getElementById('content').innerHTML = renderCards(d, 'no pico mensal do ano') + `
+    <h2 class="section">Despesas por categoria — Ano completo</h2>
+    <div class="chart-card"><canvas id="despesasChart"></canvas></div>
+    <h2 class="section" id="trendTitle">Entradas vs Despesas por mês</h2>
+    <div class="chart-card"><canvas id="trendChart"></canvas></div>
+    <h2 class="section">Evolução do número de dizimistas</h2>
+    <div class="chart-card"><canvas id="dizimistasChart"></canvas></div>
+    ${renderDetalhamento(d)}
+  `;
+  document.getElementById('despesasChart').parentElement.style.height = '340px';
+  document.getElementById('trendChart').parentElement.style.height = '280px';
+  document.getElementById('dizimistasChart').parentElement.style.height = '240px';
+
+  const trendData = [...allData].reverse();
+  renderCharts(d, trendData.map(x => x.mes), trendData.map(x => x.totalEntradas), trendData.map(x => x.totalDespesas), 'Entradas vs Despesas por mês', trendData.map(x => x.dizimistas));
+}
+
+function setMode(newMode){
+  mode = newMode;
+  document.getElementById('tabMensal').classList.toggle('active', mode === 'mensal');
+  document.getElementById('tabAnual').classList.toggle('active', mode === 'anual');
+  document.getElementById('selectorWrap').style.display = mode === 'mensal' ? 'block' : 'none';
+  if(mode === 'mensal'){
+    renderMensal(document.getElementById('mesSelect').value);
+  } else {
+    renderAnual();
+  }
+}
+
+document.getElementById('tabMensal').addEventListener('click', () => setMode('mensal'));
+document.getElementById('tabAnual').addEventListener('click', () => setMode('anual'));
+
+let mesSelecionadoAtual = null;
+
+function aplicarDados(data){
+  allData = data;
+
+  const maisRecente = data[0];
+  document.getElementById('lastUpdate').textContent = maisRecente && maisRecente.carimbo
+    ? `Atualizado pela tesouraria em ${maisRecente.carimbo}`
+    : 'Relatório Financeiro — atualizado direto da planilha';
+
+  const select = document.getElementById('mesSelect');
+  const mesParaManter = mesSelecionadoAtual && data.some(d => d.mes === mesSelecionadoAtual)
+    ? mesSelecionadoAtual
+    : data[0].mes;
+
+  select.innerHTML = data.map(d => `<option value="${d.mes}">${d.mes}</option>`).join('');
+  select.value = mesParaManter;
+  mesSelecionadoAtual = mesParaManter;
+
+  if(!select.dataset.bound){
+    select.addEventListener('change', e => {
+      mesSelecionadoAtual = e.target.value;
+      renderMensal(e.target.value);
+    });
+    select.dataset.bound = '1';
+  }
+
+  if(mode === 'mensal'){
+    renderMensal(mesParaManter);
+  } else {
+    renderAnual();
+  }
+}
+
+function carregarDados(){
+  fetch(API_URL)
+    .then(res => {
+      if(!res.ok) throw new Error('Falha ao buscar dados (' + res.status + ')');
+      return res.json();
+    })
+    .then(aplicarDados)
+    .catch(err => {
+      document.getElementById('content').innerHTML =
+        `<div class="loading">Não foi possível carregar os dados.<br><small>${err.message}</small></div>`;
+    });
+}
+
+carregarDados();
+setInterval(carregarDados, 60000); // atualiza sozinho a cada 60 segundos
+</script>
+
+</body>
+</html>
