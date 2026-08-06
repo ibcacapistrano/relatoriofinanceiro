@@ -599,12 +599,38 @@ function aplicarDados(data){
   }
 }
 
+function carregarDadosJSONP(){
+  return new Promise((resolve, reject) => {
+    const callbackName = 'ibcaCallback_' + Date.now();
+    const script = document.createElement('script');
+
+    window[callbackName] = function(data){
+      resolve(data);
+      delete window[callbackName];
+      script.remove();
+    };
+
+    script.onerror = function(){
+      reject(new Error('Não foi possível conectar à planilha'));
+      delete window[callbackName];
+      script.remove();
+    };
+
+    script.src = API_URL + (API_URL.includes('?') ? '&' : '?') + 'callback=' + callbackName;
+    document.body.appendChild(script);
+
+    setTimeout(() => {
+      if(window[callbackName]){
+        reject(new Error('Tempo esgotado ao buscar dados'));
+        delete window[callbackName];
+        script.remove();
+      }
+    }, 15000);
+  });
+}
+
 function carregarDados(){
-  fetch(API_URL)
-    .then(res => {
-      if(!res.ok) throw new Error('Falha ao buscar dados (' + res.status + ')');
-      return res.json();
-    })
+  carregarDadosJSONP()
     .then(aplicarDados)
     .catch(err => {
       document.getElementById('content').innerHTML =
